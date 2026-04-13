@@ -474,12 +474,13 @@ const LOCATIONS = [
     title: "Tegelbyggnaden",
     subtitle: "Gammal industribyggnad i tegel",
     folder: "platser/tegelbyggnaden",
-    ready: false,
+    ready: true,
     scenarios: [
-      { id: "kulturhus",  label: "Kulturhus",    desc: "Kreativt centrum & eventytor",  icon: "🎭" },
-      { id: "bryggeri",   label: "Bryggeri",      desc: "Restaurang & uteservering",     icon: "🍺" },
-      { id: "innovation", label: "Innovation",    desc: "Coworking & kontorsytor",       icon: "💡" },
-      { id: "bostader",   label: "Lägenheter",   desc: "Loftboende i industrimiljö",    icon: "🏠" },
+      { id: "bryggeri",    label: "Bryggeri",      desc: "Restaurang & uteservering",     icon: "🍺" },
+      { id: "kulturhus",   label: "Kulturhus",     desc: "Kreativt centrum & eventytor",  icon: "🎭" },
+      { id: "innovation",  label: "Innovation",    desc: "Coworking & kontorsytor",       icon: "💡" },
+      { id: "saluhall",    label: "Saluhall",      desc: "Matmarknad & lokala producenter", icon: "🧺" },
+      { id: "bostader",    label: "Lägenheter",    desc: "Loftboende i industrimiljö",    icon: "🏠" },
     ],
   },
   {
@@ -487,12 +488,12 @@ const LOCATIONS = [
     title: "Sjön",
     subtitle: "Badplats & sjöområde",
     folder: "platser/sjon",
-    ready: false,
+    ready: true,
     scenarios: [
-      { id: "badplats",     label: "Badplats",       desc: "Upprustad strand & brygga",   icon: "🏊" },
-      { id: "aktivt",       label: "Aktivt stråk",   desc: "Kajak, utegym & löpslinga",   icon: "🛶" },
-      { id: "promenad",     label: "Sjöpromenad",    desc: "Boardwalk & utsiktsplatser",  icon: "🚶" },
-      { id: "event",        label: "Evenemangsyta",  desc: "Scen, eldplats & samling",    icon: "🎪" },
+      { id: "badplats",     label: "Badplats",       desc: "Upprustad strand & brygga",     icon: "🏊" },
+      { id: "aktivt",       label: "Aktivt stråk",   desc: "Kajak, utegym & löpslinga",     icon: "🛶" },
+      { id: "naturrum",     label: "Naturrum",        desc: "Fågelplattform & naturstråk",   icon: "🦆" },
+      { id: "bostader",     label: "Sjöboende",       desc: "Moderna hus vid vattnet",       icon: "🏘️" },
     ],
   },
 ];
@@ -525,7 +526,7 @@ function renderGrid() {
         <span>${loc.subtitle}</span>
       </div>
       <div class="card-status ${loc.ready ? 'ready' : 'coming'}">
-        ${loc.ready ? '4 visioner' : 'Kommer snart'}
+        ${loc.ready ? loc.scenarios.length + ' visioner' : 'Kommer snart'}
       </div>
     `;
     if (loc.ready) {
