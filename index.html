@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AI & Stadsbyggnad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0b0b;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --border-active: rgba(255,255,255,0.3);
+    --text: #fff;
+    --text-dim: rgba(255,255,255,0.45);
+    --text-muted: rgba(255,255,255,0.28);
+    --radius: 12px;
+    --font: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --font-display: 'Playfair Display', Georgia, serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .app { max-width: 600px; margin: 0 auto; padding: 0 20px; }
+
+  /* ============ HEADER ============ */
+  .site-header {
+    text-align: center;
+    padding: 48px 0 8px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(30px, 6vw, 48px);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 14px;
+    background: linear-gradient(145deg, #fff 20%, #888 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .site-header p {
+    font-size: 15px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  /* ============ LOCATION GRID ============ */
+  .location-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 32px 0 48px;
+  }
+
+  .location-card {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    transition: border-color 0.3s, transform 0.2s;
+    background: var(--surface);
+    aspect-ratio: 16/9;
+  }
+
+  .location-card:hover, .location-card:active {
+    border-color: var(--border-active);
+    transform: scale(1.01);
+  }
+
+  .location-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s;
+  }
+
+  .location-card:hover img { transform: scale(1.03); }
+
+  .location-card .card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 20px;
+  }
+
+  .card-overlay h3 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .card-overlay span {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  .card-status {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .card-status.ready {
+    background: rgba(74,222,128,0.2);
+    color: #4ade80;
+    border: 1px solid rgba(74,222,128,0.3);
+  }
+
+  .card-status.coming {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .location-card.disabled {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  /* ============ DETAIL VIEW ============ */
+  .detail-view { display: none; padding-bottom: 48px; }
+  .detail-view.active { display: block; }
+  .location-grid.hidden { display: none; }
+  .site-header.compact h1 { font-size: clamp(22px, 4vw, 30px); margin-bottom: 6px; }
+  .site-header.compact p { display: none; }
+  .site-header.compact { padding-top: 24px; }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    margin: 16px 0 20px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .back-btn:hover { color: var(--text); }
+
+  .back-btn svg { width: 18px; height: 18px; }
+
+  .detail-title {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 4.5vw, 32px);
+    font-weight: 700;
+    margin-bottom: 24px;
+  }
+
+  /* ============ SLIDER ============ */
+  .slider-wrap {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--radius);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+    cursor: col-resize;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    background: #1a1a1a;
+  }
+
+  .slider-wrap img {
+    display: block;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+
+  .slider-after {
+    width: 100%;
+    height: auto;
+  }
+
+  .slider-before-clip {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    overflow: hidden;
+    width: 50%;
+  }
+
+  .slider-before-clip img {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  .slider-line {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 3px;
+    background: #fff;
+    box-shadow: 0 0 16px rgba(0,0,0,0.5);
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 10;
+    left: 50%;
+  }
+
+  .slider-handle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 11;
+    pointer-events: none;
+  }
+
+  .slider-handle svg { width: 24px; height: 24px; }
+
+  .slider-label {
+    position: absolute;
+    top: 16px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+    z-index: 5;
+    transition: opacity 0.2s;
+  }
+
+  .slider-label.before {
+    left: 16px;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+  }
+
+  .slider-label.after {
+    right: 16px;
+    background: rgba(255,255,255,0.88);
+    color: #1a1a1a;
+  }
+
+  /* ============ SCENARIO BUTTONS ============ */
+  .scenarios {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .scenario-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    font-family: var(--font);
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .scenario-btn:hover {
+    border-color: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+  }
+
+  .scenario-btn.active {
+    border-color: var(--border-active);
+    background: rgba(255,255,255,0.1);
+  }
+
+  .scenario-icon {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 17px;
+    transition: all 0.2s;
+    filter: grayscale(1) opacity(0.5);
+  }
+
+  .scenario-btn.active .scenario-icon {
+    background: #fff;
+    filter: none;
+  }
+
+  .scenario-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    transition: color 0.2s;
+  }
+
+  .scenario-btn.active .scenario-label { color: #fff; }
+
+  .scenario-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.35;
+  }
+
+  /* ============ FULLSCREEN ============ */
+  .fs-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    margin-top: 16px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .fs-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+  .fs-btn svg { width: 16px; height: 16px; }
+
+  /* ============ DISCLAIMER ============ */
+  .disclaimer {
+    text-align: center;
+    padding: 16px 20px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.04);
+    margin-top: 28px;
+  }
+
+  .disclaimer p {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.55;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="site-header" id="siteHeader">
+    <div class="badge">AI & Stadsbyggnad</div>
+    <h1>Hur kan AI förändra våra platser?</h1>
+    <p>Välj en plats för att se AI-genererade visioner av vad den skulle kunna bli.</p>
+  </header>
+
+  <!-- LOCATION PICKER -->
+  <div class="location-grid" id="locationGrid"></div>
+
+  <!-- DETAIL / SLIDER VIEW -->
+  <div class="detail-view" id="detailView">
+    <button class="back-btn" id="backBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Alla platser
+    </button>
+
+    <h2 class="detail-title" id="detailTitle"></h2>
+
+    <div class="slider-wrap" id="slider">
+      <img class="slider-after" id="afterImg" src="" alt="AI-vision">
+      <div class="slider-before-clip" id="beforeClip">
+        <img id="beforeImg" src="" alt="Originalbild">
+      </div>
+      <div class="slider-line" id="sliderLine"></div>
+      <div class="slider-handle" id="sliderHandle">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M8 4l-6 8 6 8M16 4l6 8-6 8" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="slider-label before" id="labelBefore">IDAG</div>
+      <div class="slider-label after" id="labelAfter">AI-VISION</div>
+    </div>
+
+    <div class="scenarios" id="scenarios"></div>
+
+    <button class="fs-btn" id="fsBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
+      </svg>
+      Helskärm
+    </button>
+
+    <div class="disclaimer">
+      <p>Bilderna är AI-genererade visioner framtagna med Google Gemini&nbsp;— inte faktiska planer eller politiska beslut. Syftet är att visa hur AI kan användas som verktyg i tidiga skeden av stadsplanering.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURATION — Edit this to add/change locations & scenarios
+// ============================================================
+const LOCATIONS = [
+  {
+    id: "backen",
+    title: "Bäcken",
+    subtitle: "Grönområde vid bäck & bro",
+    folder: "platser/backen",
+    ready: true,
+    scenarios: [
+      { id: "aktivitetspark", label: "Aktivitetspark", desc: "Utegym, promenadstråk & modern bro", icon: "🏋️" },
+      { id: "stadsodling",    label: "Stadsodling",    desc: "Odlingslådor, växthus & mötesplats", icon: "🌱" },
+      { id: "stadspark",      label: "Stadspark",      desc: "Blomsterplanteringar & gångvägar",   icon: "🌳" },
+      { id: "bostader",       label: "Bostadskvarter", desc: "Moderna radhus vid bäcken",          icon: "🏘️" },
+    ],
+  },
+  {
+    id: "tegelbyggnaden",
+    title: "Tegelbyggnaden",
+    subtitle: "Gammal industribyggnad i tegel",
+    folder: "platser/tegelbyggnaden",
+    ready: false,
+    scenarios: [
+      { id: "kulturhus",  label: "Kulturhus",    desc: "Kreativt centrum & eventytor",  icon: "🎭" },
+      { id: "bryggeri",   label: "Bryggeri",      desc: "Restaurang & uteservering",     icon: "🍺" },
+      { id: "innovation", label: "Innovation",    desc: "Coworking & kontorsytor",       icon: "💡" },
+      { id: "bostader",   label: "Lägenheter",   desc: "Loftboende i industrimiljö",    icon: "🏠" },
+    ],
+  },
+  {
+    id: "sjon",
+    title: "Sjön",
+    subtitle: "Badplats & sjöområde",
+    folder: "platser/sjon",
+    ready: false,
+    scenarios: [
+      { id: "badplats",     label: "Badplats",       desc: "Upprustad strand & brygga",   icon: "🏊" },
+      { id: "aktivt",       label: "Aktivt stråk",   desc: "Kajak, utegym & löpslinga",   icon: "🛶" },
+      { id: "promenad",     label: "Sjöpromenad",    desc: "Boardwalk & utsiktsplatser",  icon: "🚶" },
+      { id: "event",        label: "Evenemangsyta",  desc: "Scen, eldplats & samling",    icon: "🎪" },
+    ],
+  },
+];
+
+// ============================================================
+// APP STATE
+// ============================================================
+let currentLocation = null;
+let currentScenario = null;
+let sliderPos = 50;
+let dragging = false;
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// ============================================================
+// LOCATION GRID
+// ============================================================
+function renderGrid() {
+  const grid = $("#locationGrid");
+  grid.innerHTML = "";
+
+  LOCATIONS.forEach(loc => {
+    const card = document.createElement("div");
+    card.className = "location-card" + (loc.ready ? "" : " disabled");
+    card.innerHTML = `
+      <img src="${loc.folder}/original.jpg" alt="${loc.title}" loading="lazy">
+      <div class="card-overlay">
+        <h3>${loc.title}</h3>
+        <span>${loc.subtitle}</span>
+      </div>
+      <div class="card-status ${loc.ready ? 'ready' : 'coming'}">
+        ${loc.ready ? '4 visioner' : 'Kommer snart'}
+      </div>
+    `;
+    if (loc.ready) {
+      card.addEventListener("click", () => openLocation(loc));
+    }
+    grid.appendChild(card);
+  });
+}
+
+// ============================================================
+// DETAIL VIEW
+// ============================================================
+function openLocation(loc) {
+  currentLocation = loc;
+  currentScenario = loc.scenarios[0].id;
+
+  $("#siteHeader").classList.add("compact");
+  $("#locationGrid").classList.add("hidden");
+  $("#detailView").classList.add("active");
+  $("#detailTitle").textContent = loc.title;
+
+  // Render scenario buttons
+  const cont = $("#scenarios");
+  cont.innerHTML = "";
+  loc.scenarios.forEach(s => {
+    const btn = document.createElement("button");
+    btn.className = "scenario-btn" + (s.id === currentScenario ? " active" : "");
+    btn.dataset.id = s.id;
+    btn.innerHTML = `
+      <div class="scenario-icon">${s.icon}</div>
+      <div>
+        <div class="scenario-label">${s.label}</div>
+        <div class="scenario-desc">${s.desc}</div>
+      </div>
+    `;
+    btn.addEventListener("click", () => selectScenario(s.id));
+    cont.appendChild(btn);
+  });
+
+  loadImages();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function closeLocation() {
+  currentLocation = null;
+  $("#siteHeader").classList.remove("compact");
+  $("#locationGrid").classList.remove("hidden");
+  $("#detailView").classList.remove("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function selectScenario(id) {
+  currentScenario = id;
+  $$(".scenario-btn").forEach(b => b.classList.toggle("active", b.dataset.id === id));
+  loadImages();
+}
+
+function loadImages() {
+  const folder = currentLocation.folder;
+  $("#beforeImg").src = `${folder}/original.jpg`;
+  $("#afterImg").src = `${folder}/${currentScenario}.jpg`;
+  setSlider(50);
+}
+
+// ============================================================
+// BEFORE/AFTER SLIDER
+// ============================================================
+function setSlider(pct) {
+  sliderPos = Math.max(0, Math.min(100, pct));
+  const clip = $("#beforeClip");
+  const line = $("#sliderLine");
+  const handle = $("#sliderHandle");
+
+  clip.style.width = sliderPos + "%";
+  const innerImg = clip.querySelector("img");
+  if (sliderPos > 0) {
+    innerImg.style.width = (100 / (sliderPos / 100)) + "%";
+  }
+  line.style.left = sliderPos + "%";
+  handle.style.left = sliderPos + "%";
+  $("#labelBefore").style.opacity = sliderPos > 12 ? 1 : 0;
+  $("#labelAfter").style.opacity = sliderPos < 88 ? 1 : 0;
+}
+
+function getSliderX(e) {
+  const rect = $("#slider").getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  return ((clientX - rect.left) / rect.width) * 100;
+}
+
+const slider = $("#slider");
+slider.addEventListener("mousedown", e => { dragging = true; setSlider(getSliderX(e)); });
+slider.addEventListener("touchstart", e => { dragging = true; setSlider(getSliderX(e)); }, { passive: true });
+window.addEventListener("mousemove", e => { if (dragging) { e.preventDefault(); setSlider(getSliderX(e)); }});
+window.addEventListener("touchmove", e => { if (dragging) { e.preventDefault(); setSlider(getSliderX(e)); }}, { passive: false });
+window.addEventListener("mouseup", () => dragging = false);
+window.addEventListener("touchend", () => dragging = false);
+
+// ============================================================
+// NAVIGATION & FULLSCREEN
+// ============================================================
+$("#backBtn").addEventListener("click", closeLocation);
+
+$("#fsBtn").addEventListener("click", () => {
+  const el = document.documentElement;
+  if (!document.fullscreenElement) {
+    (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen).call(el);
+  } else {
+    (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen).call(document);
+  }
+});
+
+// Handle back button on mobile
+window.addEventListener("popstate", () => {
+  if (currentLocation) { closeLocation(); }
+});
+
+// ============================================================
+// INIT
+// ============================================================
+renderGrid();
+</script>
+</body>
+</html>
