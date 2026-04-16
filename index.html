@@ -31,7 +31,7 @@
     overflow-x: hidden;
   }
 
-  .app { max-width: 600px; margin: 0 auto; padding: 0 20px; }
+  .app { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
 
   /* ============ HEADER ============ */
   .site-header {
@@ -75,9 +75,22 @@
   /* ============ LOCATION GRID ============ */
   .location-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     padding: 32px 0 48px;
+  }
+
+  @media (min-width: 820px) {
+    .location-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .location-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   .location-card {
@@ -118,13 +131,13 @@
 
   .card-overlay h3 {
     font-family: var(--font-display);
-    font-size: 22px;
+    font-size: clamp(16px, 2.5vw, 22px);
     font-weight: 600;
     margin-bottom: 4px;
   }
 
   .card-overlay span {
-    font-size: 13px;
+    font-size: clamp(11px, 1.5vw, 13px);
     color: rgba(255,255,255,0.6);
   }
 
@@ -159,7 +172,7 @@
   }
 
   /* ============ DETAIL VIEW ============ */
-  .detail-view { display: none; padding-bottom: 48px; }
+  .detail-view { display: none; padding-bottom: 48px; max-width: 800px; margin: 0 auto; }
   .detail-view.active { display: block; }
   .location-grid.hidden { display: none; }
   .site-header.compact h1 { font-size: clamp(22px, 4vw, 30px); margin-bottom: 6px; }
@@ -294,6 +307,12 @@
     grid-template-columns: 1fr 1fr;
     gap: 8px;
     margin-top: 24px;
+  }
+
+  @media (min-width: 680px) {
+    .scenarios {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 
   .scenario-btn {
