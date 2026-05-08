@@ -477,19 +477,31 @@
     z-index: 100;
   }
 
-  /* Slidern centreras och dimensioneras av bildens aspect */
+  /* Slidern fyller hela bildraden — bilden anpassas via object-fit: contain */
   body.fs-mode .slider-wrap {
-    align-self: center;
-    justify-self: center;
-    width: auto;
-    height: auto;
-    max-width: 100vw;
-    max-height: 100%;
-    aspect-ratio: var(--fs-aspect, 16/9);
+    width: 100%;
+    height: 100%;
     margin: 0;
     border-radius: 0;
     box-shadow: none;
     background: #000;
+    position: relative;
+  }
+
+  /* Slider-after fyller hela slider-wrap, men bilden visas helt utan beskärning */
+  body.fs-mode .slider-after {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain;
+  }
+
+  /* Before-bilden matchar slider-wrap exakt och använder samma object-fit
+     så den ligger pixel-perfekt under after-bilden (inkl. eventuella letterbox-fält) */
+  body.fs-mode .slider-before-clip img {
+    height: 100% !important;
+    object-fit: contain;
   }
 
   /* Scenarioknapparna blir en horisontell rad i botten */
@@ -1241,27 +1253,17 @@ $("#fsToggle").addEventListener("click", enterFullscreen);
 $("#fsClose").addEventListener("click", exitFullscreen);
 
 function enterFullscreen() {
-  updateFsAspect();
   document.body.classList.add("fs-mode");
-  // Tvinga om slidern till 50% och uppdatera Leaflet om kartan dolts
-  setSlider(50);
+  // Tvinga om slidern till 50% efter layout-byte
+  // requestAnimationFrame ger DOM tid att applicera fs-mode innan setSlider mäter
+  requestAnimationFrame(() => setSlider(50));
 }
 
 function exitFullscreen() {
   document.body.classList.remove("fs-mode");
   // Leaflet kan behöva ny mätning när kartan visas igen
   setTimeout(() => leafletMap && leafletMap.invalidateSize(), 50);
-  setSlider(50);
-}
-
-function updateFsAspect() {
-  const after = $("#afterImg");
-  if (after.naturalWidth && after.naturalHeight) {
-    $("#slider").style.setProperty(
-      "--fs-aspect",
-      `${after.naturalWidth} / ${after.naturalHeight}`
-    );
-  }
+  requestAnimationFrame(() => setSlider(50));
 }
 
 // Handle back button on mobile
