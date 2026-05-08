@@ -390,28 +390,147 @@
     line-height: 1.4;
   }
 
-  /* ============ FULLSCREEN ============ */
-  .fs-btn {
+  /* ============ FULLSCREEN MODE ============ */
+  /* Trigger-knapp i bildens hörn */
+  .fs-toggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 14px;
-    margin-top: 16px;
-    border-radius: 10px;
-    border: 1.5px solid var(--border);
-    background: var(--surface);
-    color: var(--text-dim);
-    font-family: var(--font);
-    font-size: 13px;
-    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    z-index: 15;
+    transition: background 0.2s, border-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .fs-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
-  .fs-btn svg { width: 16px; height: 16px; }
+  .fs-toggle:hover, .fs-toggle:active {
+    background: rgba(0,0,0,0.78);
+    border-color: rgba(255,255,255,0.4);
+  }
+
+  .fs-toggle svg { width: 18px; height: 18px; }
+
+  /* Stäng-knapp (syns bara i fs-mode) */
+  .fs-close {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    color: #fff;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 200;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .fs-close:hover, .fs-close:active { background: rgba(0,0,0,0.85); }
+  .fs-close svg { width: 22px; height: 22px; }
+
+  /* === FS-MODE state === */
+  body.fs-mode { overflow: hidden; }
+
+  body.fs-mode .site-header,
+  body.fs-mode .back-btn,
+  body.fs-mode .detail-title,
+  body.fs-mode .location-info,
+  body.fs-mode .disclaimer,
+  body.fs-mode .fs-toggle,
+  body.fs-mode .scenario-desc {
+    display: none !important;
+  }
+
+  body.fs-mode .fs-close { display: flex; }
+
+  body.fs-mode .app {
+    max-width: none;
+    padding: 0;
+  }
+
+  body.fs-mode .detail-view {
+    position: fixed;
+    inset: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    background: #000;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    z-index: 100;
+  }
+
+  /* Slidern centreras och dimensioneras av bildens aspect */
+  body.fs-mode .slider-wrap {
+    align-self: center;
+    justify-self: center;
+    width: auto;
+    height: auto;
+    max-width: 100vw;
+    max-height: 100%;
+    aspect-ratio: var(--fs-aspect, 16/9);
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: #000;
+  }
+
+  /* Scenarioknapparna blir en horisontell rad i botten */
+  body.fs-mode .scenarios {
+    grid-row: 2;
+    margin: 0;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom)) 14px;
+    background: rgba(0,0,0,0.88);
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+  }
+
+  body.fs-mode .scenarios::-webkit-scrollbar { height: 6px; }
+  body.fs-mode .scenarios::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+  }
+
+  body.fs-mode .scenario-btn {
+    flex: 0 0 auto;
+    width: auto;
+    padding: 8px 12px;
+    gap: 8px;
+    border-radius: 8px;
+  }
+
+  body.fs-mode .scenario-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    border-radius: 6px;
+  }
+
+  body.fs-mode .scenario-label {
+    font-size: 13px;
+    white-space: nowrap;
+  }
 
   /* ============ DISCLAIMER ============ */
   .disclaimer {
@@ -745,6 +864,11 @@
       </div>
       <div class="slider-label before" id="labelBefore">IDAG</div>
       <div class="slider-label after" id="labelAfter">AI-VISION</div>
+      <button class="fs-toggle" id="fsToggle" aria-label="Öppna i helskärm" title="Helskärm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
+        </svg>
+      </button>
     </div>
 
     <div class="scenarios" id="scenarios"></div>
@@ -761,18 +885,18 @@
       <div class="location-map" id="locationMap"></div>
     </div>
 
-    <button class="fs-btn" id="fsBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
-      </svg>
-      Helskärm
-    </button>
-
     <div class="disclaimer">
       <p><strong>Så gjordes det här:</strong> Claude (Anthropic) skrev promptarna, Gemini (Google) genererade bilderna, och appen är byggd med hjälp av Claude. Bilderna är AI-visioner — inte faktiska planer eller politiska beslut.</p>
     </div>
   </div>
 </div>
+
+<!-- Stäng-knapp för helskärmsläge -->
+<button class="fs-close" id="fsClose" aria-label="Stäng helskärm" title="Stäng">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 6L6 18M6 6l12 12"/>
+  </svg>
+</button>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
@@ -1029,6 +1153,7 @@ function initMap(coords) {
 
 function closeLocation() {
   currentLocation = null;
+  document.body.classList.remove("fs-mode");
   $("#siteHeader").classList.remove("compact");
   $("#locationGrid").classList.remove("hidden");
   $("#detailView").classList.remove("active");
@@ -1055,7 +1180,11 @@ function loadImages() {
   let loaded = 0;
   const onLoad = () => {
     loaded++;
-    if (loaded >= 2) slider.classList.remove("loading");
+    if (loaded >= 2) {
+      slider.classList.remove("loading");
+      // Håll fs-aspect i synk om vi är i helskärmsläge
+      if (document.body.classList.contains("fs-mode")) updateFsAspect();
+    }
   };
   const onError = () => slider.classList.remove("loading");
 
@@ -1108,14 +1237,32 @@ window.addEventListener("touchend", () => dragging = false);
 // ============================================================
 $("#backBtn").addEventListener("click", closeLocation);
 
-$("#fsBtn").addEventListener("click", () => {
-  const el = document.documentElement;
-  if (!document.fullscreenElement) {
-    (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen).call(el);
-  } else {
-    (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen).call(document);
+$("#fsToggle").addEventListener("click", enterFullscreen);
+$("#fsClose").addEventListener("click", exitFullscreen);
+
+function enterFullscreen() {
+  updateFsAspect();
+  document.body.classList.add("fs-mode");
+  // Tvinga om slidern till 50% och uppdatera Leaflet om kartan dolts
+  setSlider(50);
+}
+
+function exitFullscreen() {
+  document.body.classList.remove("fs-mode");
+  // Leaflet kan behöva ny mätning när kartan visas igen
+  setTimeout(() => leafletMap && leafletMap.invalidateSize(), 50);
+  setSlider(50);
+}
+
+function updateFsAspect() {
+  const after = $("#afterImg");
+  if (after.naturalWidth && after.naturalHeight) {
+    $("#slider").style.setProperty(
+      "--fs-aspect",
+      `${after.naturalWidth} / ${after.naturalHeight}`
+    );
   }
-});
+}
 
 // Handle back button on mobile
 window.addEventListener("popstate", () => {
@@ -1140,7 +1287,9 @@ infoModal.addEventListener("click", (e) => {
   if (e.target === infoModal) closeModal();
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && infoModal.classList.contains("active")) closeModal();
+  if (e.key !== "Escape") return;
+  if (infoModal.classList.contains("active")) closeModal();
+  else if (document.body.classList.contains("fs-mode")) exitFullscreen();
 });
 
 // ============================================================
